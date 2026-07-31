@@ -1,105 +1,56 @@
-# Finance-Portfolio-Projects
-Borosil Renewables Valuation Model
+📈 Automated Equity Research & Valuation Pipeline
 
-1. High-Level Purpose of the Project
+Overview
 
-This project is an Automated Equity Research and Valuation Pipeline.
-It bridges data engineering and corporate finance by programmatically ingesting raw financial data (via API), running historical diagnostic checks, and executing a multi-scenario Discounted Cash Flow (DCF) model. Ultimately, it synthesizes these quantitative outputs into an actionable intrinsic value and an institutional-grade visual dashboard.
+This project is an automated, end-to-end equity research and valuation engine built in Python. It programmatically ingests raw corporate financial data via APIs, runs historical diagnostic checks, and executes a multi-scenario Discounted Cash Flow (DCF) model.
 
-In an interview, frame this as a tool that reduces the "grunt work" of data gathering and preliminary modeling, allowing the analyst to focus purely on stress-testing assumptions and capital allocation theories.
+The pipeline synthesizes complex quantitative outputs into actionable intrinsic value targets and generates an institutional-grade visual dashboard to assess risk asymmetry.
 
-2 & 3. Code Walkthrough, Variables, and Functions
+Live Interactive Dashboard: [Insert your GitHub Pages link here later]
 
-Cell 1: Setup & Imports
+🛠️ Key Features
 
-What it does: Installs and imports necessary libraries (Pandas for dataframes, NumPy for vector math, Matplotlib/Seaborn for charting, yfinance for API data).
+Automated Data Ingestion: Connects to Yahoo Finance API (yfinance) to pull historical Income Statements, Balance Sheets, and Cash Flow statements.
 
-Cell 2: User Assumptions (The Control Panel)
+Algorithmic KPI Diagnostics: Automatically grades historical financial health (CAGR, Operating Margins, ROE, Interest Coverage) using heuristic thresholds.
 
-What it does: Centralizes all macroeconomic and company-specific assumptions.
+Multi-Scenario DCF Modeling: Forecasts 5-year unlevered free cash flows (FCF) across Bull, Base, and Bear scenarios.
 
-Key Variables:
+Risk Asymmetry Visualizations: Generates a 6-panel Matplotlib/Seaborn dashboard including cross-scenario valuation spectrums and a 3D Sensitivity Matrix (WACC vs. Terminal Growth).
 
-REV_GROWTH_BASE/BULL/BEAR: The Compound Annual Growth Rate (CAGR) assumptions for the top line under different market conditions.
+Peer Relative Valuation: Automatically scrapes and formats comparative market multiples (EV/EBITDA, P/E) for defined competitor baskets.
 
-OP_MARGIN: Target EBIT (Earnings Before Interest and Taxes) margin.
+🗂️ Repository Structure
 
-WACC (Weighted Average Cost of Capital): The discount rate applied to future cash flows.
+Borosil_Renewables_Valuation.ipynb: The core Python engine (Google Colab / Jupyter Notebook format).
 
-TERMINAL_GROWTH: The perpetual growth rate applied after Year 5 (usually tethered to long-term inflation or GDP growth).
+index.html: A single-page application (SPA) interactive financial infographic built with Tailwind CSS, Chart.js, and Plotly.
 
-CAPEX_PCT_REV / DEPR_PCT_REV: Capital Expenditures and Depreciation modeled as a percentage of revenue.
+Quant_Interview_Prep_Guide.md: A detailed breakdown of the corporate finance theory, model mechanics, and identified vulnerabilities (designed for interview prep).
 
-Cell 3: Data Ingestion (fetch_financial_data)
+requirements.txt: Python package dependencies.
 
-What it does: Pings Yahoo Finance to download Income Statements, Balance Sheets, and Cash Flow statements. Includes basic error handling (try/except) to catch empty API returns.
+🚀 How to Run Locally
 
-Cell 4: KPI Risk Diagnostic Engine (analyze_kpis)
+Clone the repository:
 
-What it does: An automated heuristic engine that grades historical financial health.
+git clone [https://github.com/YourUsername/Automated-Equity-Valuation-Engine.git](https://github.com/YourUsername/Automated-Equity-Valuation-Engine.git)
 
-Key Logic: Calculates trailing CAGR, Operating Margins, ROE, and Interest Coverage. It assigns a "Strong/Neutral/Weak" flag based on predefined hard-coded thresholds.
 
-Cell 5: DCF Model (execute_dcf_model)
+Install the required dependencies:
 
-What it does: The mathematical heart of the model. It forecasts 5 years of financials and discounts them to the present value.
+pip install -r requirements.txt
 
-Key Variables/Formulas:
 
-nopat_val (Net Operating Profit After Tax) = EBIT * (1 - Tax Rate)$
+Open the Jupyter Notebook:
 
-fcf_val (Free Cash Flow) = $NOPAT + D\&A - CapEx - \Delta NWC$
+jupyter notebook Borosil_Renewables_Valuation.ipynb
 
-discount_factors = $1 / (1 + WACC)^t$
 
-terminal_value = Final Year FCF * $(1 + g) / (WACC - g)$
+🧠 Future Institutional Upgrades
 
-Cell 6: Sensitivity & Comps (generate_sensitivity_matrix, execute_relative_valuation)
+Dynamic CAPM Engine: Transitioning from static WACC to dynamic pricing using rolling 3-year Betas against benchmark indices.
 
-What it does: * Creates a 2D matrix (Pandas DataFrame) looping through different WACC and Terminal Growth combinations.
+Three-Statement Integration: Linking the DCF to a fully integrated IS/BS/CF model.
 
-Pulls peer group data to compare valuation multiples (P/E, EV/EBITDA).
-
-Cells 7, 8 & 9: Pipeline Execution, Text Outputs, and Visualization
-
-What it does: Instantiates the functions, calculates the intrinsic value across the three scenarios, prints a formatted text summary using tabulate, and generates a 6-panel Matplotlib dashboard.
-
-4. Core Quantitative Finance Concepts Explained
-
-If asked to explain the math to a Portfolio Manager, use these definitions:
-
-Discounted Cash Flow (DCF): The foundational premise that a company is worth the exact present value of all the cash it will ever generate for its investors, discounted back for time and risk.
-
-Unlevered Free Cash Flow (FCF): The cash generated by the core operations of the business, available to all capital providers (both debt and equity holders). This is why we start with EBIT (operating income) and ignore Interest Expense in the projection.
-
-WACC (Weighted Average Cost of Capital): The "Hurdle Rate." It represents the blended cost of funding the business via debt and equity. It also represents the riskiness of the asset. Higher risk = Higher WACC = Lower Valuation.
-
-Terminal Value (Gordon Growth Model): We can't forecast year-by-year into infinity. We assume at Year 5, the company reaches a "steady state" and grows at a constant rate forever. Note: Terminal value often makes up 60-80% of a DCF's total value, which makes it highly sensitive.
-
-Enterprise Value (EV) to Equity Value Bridge: * Enterprise Value is the total value of the company's operations.
-
-To get what the shares are worth (Equity Value), we must add non-operating assets (Cash) and subtract claims from other stakeholders (Total Debt). Equity Value / Shares = Intrinsic Value Per Share.
-
-5. Why the Visualizations Matter (The Dashboard)
-
-Quants and analysts use visuals to instantly spot logical errors in their assumptions:
-
-Price History: Provides context. Is the stock highly volatile? Are we valuing it at all-time highs?
-
-Revenue / FCF Projections: Visual check for the "hockey stick" effect. If historical revenue is flat, but the projection bar chart spikes aggressively upward, the analyst's assumptions are likely flawed.
-
-Cross-Scenario Valuation Spectrum: Shows the Asymmetry of Risk. If the current stock price is higher than your Bull Case target, the market is pricing in perfection, and the stock is dangerous. If it's trading near your Bear Case, you have a massive "Margin of Safety."
-
-Sensitivity Heatmap: WACC and Terminal Growth are guesses. The heatmap shows what happens if you are wrong. If a 1% change in WACC turns the stock from a "Buy" to a "Sell", the investment is too fragile.
-
-6. Bugs, Weaknesses, and Unrealistic Assumptions
-
-Crucial Interview Skill: Pointing out the flaws in your own model before they do.
-
-Weakness 1: Static WACC. The model hardcodes WACC at 11%. In reality, WACC changes dynamically based on current interest rates, the company's changing capital structure, and rolling Beta (CAPM).
-
-Weakness 2: Simplistic Reinvestment (CapEx/D&A). Tying CapEx and Depreciation to a strict % of revenue is a "quick and dirty" heuristic. Real models build a PP&E schedule where CapEx drives future revenue, and Depreciation is a cascading schedule based on the useful life of assets.
-
-Weakness 3: Constant Margins. Operating margins rarely stay flat for 5 years. They usually expand due to operating leverage (fixed costs spreading out) or compress due to industry competition.
-
-Data Bug Risk: Yahoo Finance data is notoriously unadjusted. It often includes one-time non-recurring items (like the sale of a factory) in EBIT, which ruins the NOPAT calculation. Professional models scrub the historical data manually first.
+Monte Carlo Simulation: Implementing scipy.stats for 10,000-iteration probability density curves on revenue and margin assumptions.
