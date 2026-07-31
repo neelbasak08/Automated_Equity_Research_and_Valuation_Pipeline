@@ -46,7 +46,7 @@ What it does: The mathematical heart of the model. It forecasts 5 years of finan
 
 Key Variables/Formulas:
 
-nopat_val (Net Operating Profit After Tax) = EBIT \times (1 - Tax Rate)$
+nopat_val (Net Operating Profit After Tax) = EBIT * (1 - Tax Rate)$
 
 fcf_val (Free Cash Flow) = $NOPAT + D\&A - CapEx - \Delta NWC$
 
