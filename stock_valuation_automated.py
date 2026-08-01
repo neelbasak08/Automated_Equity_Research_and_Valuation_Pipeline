@@ -45,8 +45,9 @@ print(f"✅ Cell 1 Complete: Environment configured for {TARGET_TICKER}.")
 """# Data **Retrieval**"""
 
 # ==============================================================================
-# CELL 2: DATA INGESTION & PEER DISCOVERY
+# CELL 2: DATA INGESTION & DYNAMIC SECTOR-BASED PEER DISCOVERY
 # ==============================================================================
+import requests # Added to ensure robust Wikipedia scraping
 
 DEFAULT_PEERS = ["MSFT", "AAPL", "GOOGL", "AMZN"]
 INDIA_DEFAULT_PEERS = ["RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS"]
@@ -67,25 +68,76 @@ def fetch_universal_data(ticker_symbol):
         return None, None, None, None, None
 
 def discover_competitors(target_info, ticker_symbol):
-    print("[INFO] Executing dynamic sector peer discovery...")
+    """
+    Dynamically finds competitors by matching the target's Yahoo Finance Sector 
+    to constituents of major indices (S&P 500 for US, Nifty 50 for India) via Wikipedia.
+    """
+    print("[INFO] Executing dynamic sector-based peer discovery...")
     is_india = ticker_symbol.upper().endswith(".NS") or ticker_symbol.upper().endswith(".BO")
-    industry = target_info.get('industry', 'Unknown')
-    sector = target_info.get('sector', 'Unknown')
-    print(f"[INFO] Profile Identified -> Sector: {sector} | Industry: {industry}")
+    yf_sector = target_info.get('sector', 'Unknown')
+    print(f"[INFO] Target Profile Identified -> Sector: {yf_sector}")
+    
+    # Map Yahoo Finance sectors to Standard GICS / Nifty 50 index sectors
+    sector_mapping = {
+        "Technology": "Information Technology",
+        "Healthcare": "Health Care",
+        "Financial Services": "Financials" if not is_india else "Financial Services",
+        "Consumer Cyclical": "Consumer Discretionary" if not is_india else "Automobile",
+        "Consumer Defensive": "Consumer Staples" if not is_india else "Consumer Goods",
+        "Basic Materials": "Materials" if not is_india else "Metals",
+        "Communication Services": "Communication Services" if not is_india else "Telecommunication",
+        "Industrials": "Industrials" if not is_india else "Construction",
+        "Energy": "Energy" if not is_india else "Oil",
+        "Utilities": "Utilities" if not is_india else "Power"
+    }
+    
+    search_sector = sector_mapping.get(yf_sector, yf_sector)
+    
+    # Use the first word of the sector to ensure broad fuzzy matching
+    search_term = search_sector.split()[0].replace(',', '') 
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    
+    try:
+        if is_india:
+            # Scrape live Nifty 50 Constituents
+            url = "https://en.wikipedia.org/wiki/NIFTY_50"
+            html = requests.get(url, headers=headers).text
+            tables = pd.read_html(html)
+            df = tables[2] # Table index for Nifty 50 constituents
+            
+            # Filter the dataframe by sector
+            filtered_df = df[df['Sector'].str.contains(search_term, case=False, na=False)]
+            peers = filtered_df['Symbol'].tolist()
+            # Append Yahoo Finance suffix for India
+            peers = [f"{p}.NS" for p in peers if f"{p}.NS" != ticker_symbol]
+            
+        else:
+            # Scrape live S&P 500 Constituents
+            url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+            html = requests.get(url, headers=headers).text
+            tables = pd.read_html(html)
+            df = tables[0] # Table index for S&P 500 constituents
+            
+            # Filter the dataframe by GICS sector
+            filtered_df = df[df['GICS Sector'].str.contains(search_term, case=False, na=False)]
+            peers = filtered_df['Symbol'].tolist()
+            peers = [p for p in peers if p != ticker_symbol]
 
-    # Heuristic mapping for standard global industries
-    if "Steel" in industry:
-        return ["JSWSTEEL.NS", "SAIL.NS", "HINDALCO.NS"] if is_india else ["X", "NUE", "CLF"]
-    elif "Solar" in industry or "Renewable" in sector:
-        return ["BOROLTD.NS", "INSOLATION.NS", "WEBELSOLAR.NS"] if is_india else ["FSLR", "ENPH", "SEDG"]
-    elif "Technology" in sector or "Software" in industry:
-        return ["TCS.NS", "INFY.NS", "WIT.NS"] if is_india else ["MSFT", "GOOGL", "META"]
-    elif "Bank" in industry:
-        return ["ICICIBANK.NS", "SBIN.NS", "AXISBANK.NS"] if is_india else ["JPM", "BAC", "C"]
+        # Return up to 4 closest competitors
+        if len(peers) >= 1:
+            selected_peers = peers[:4]
+            print(f"[SUCCESS] Dynamically discovered peers in '{search_sector}': {selected_peers}")
+            return selected_peers
+        else:
+            print(f"[WARNING] No direct peers found in index for '{search_sector}'. Using fallbacks.")
+            
+    except Exception as e:
+        print(f"[WARNING] Dynamic fetching failed ({e}). Falling back to safe defaults.")
 
+    # Failsafe if Wikipedia changes table structures or network fails
     return INDIA_DEFAULT_PEERS if is_india else DEFAULT_PEERS
 
-print("✅ Cell 2 Complete: Ingestion and discovery functions loaded.")
+print("✅ Cell 2 Complete: Ingestion and dynamic discovery functions loaded.")
 
 """# **DCF Valuation Engine and Relative** **Valuation**"""
 
